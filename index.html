@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A playful 3D home where children practice everyday health choices." />
+  <title>KidSim | Healthy Home Adventure</title>
+  <link rel="stylesheet" href="./src/web/styles.css" />
+</head>
+<body>
+  <canvas id="world" aria-label="Interactive three-dimensional healthy home"></canvas>
+  <header class="topbar">
+    <div><span>KIDSIM</span><h1>Healthy Home Adventure</h1></div>
+    <div class="progress"><strong id="stars">★ 0</strong><span id="level">Mission 1 of 3</span></div>
+  </header>
+  <section id="guide" class="guide" aria-live="polite">
+    <p class="speaker">Kibi, your health guide</p>
+    <h2 id="prompt">Welcome home!</h2>
+    <p id="lesson">Make healthy choices to earn three stars.</p>
+    <div id="choices" class="choices"></div>
+  </section>
+  <section id="splash" class="splash">
+    <div class="mascot" aria-hidden="true">✦</div>
+    <h2>Can you protect the Healthy Home?</h2>
+    <p>Visit each room, notice the health clue, and choose what the hero should do next.</p>
+    <button id="start" type="button">Start adventure</button>
+    <small>Designed for guided health education. No personal data is collected.</small>
+  </section>
+  <button id="restart" class="restart" type="button">Restart</button>
+  <script type="module" src="./src/web/main.js"></script>
+</body>
+</html>

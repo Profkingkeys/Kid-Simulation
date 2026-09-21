@@ -1,0 +1,20 @@
+:root { color-scheme: light; font-family: Nunito, ui-rounded, system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; overflow: hidden; color: #122343; background: #bfe8ff; }
+#world { width: 100vw; height: 100vh; display: block; }
+.topbar { position: fixed; inset: 1rem 1rem auto; display: flex; justify-content: space-between; align-items: center; padding: .75rem 1rem; border: 2px solid #ffffffaa; border-radius: 1rem; background: #ffffffe6; box-shadow: 0 .8rem 2rem #2f5f7d28; }
+.topbar span { color: #3155ff; font-size: .68rem; letter-spacing: .18em; font-weight: 900; }
+h1 { margin: .12rem 0 0; font-size: clamp(1rem, 3vw, 1.6rem); }
+.progress { display: grid; text-align: right; }.progress strong { color: #ec8a00; font-size: 1.25rem; }.progress span { color: #596a82; font-size: .74rem; }
+.guide { position: fixed; inset: auto 1rem 1rem; width: min(36rem, calc(100vw - 2rem)); padding: 1rem; border-radius: 1rem; background: #112753ee; color: white; box-shadow: 0 1rem 3rem #12234355; }
+.speaker { margin: 0 0 .3rem; color: #7ff4d4; font-size: .7rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.guide h2 { margin: 0 0 .35rem; font-size: 1.1rem; }.guide p { margin-top: 0; }
+.choices { display: flex; gap: .55rem; flex-wrap: wrap; }
+button { border: 0; border-radius: .75rem; padding: .75rem 1rem; background: #ffe057; color: #1b2b47; box-shadow: 0 .25rem 0 #c99616; font-weight: 900; cursor: pointer; }
+button:hover { transform: translateY(-1px); }
+.splash { position: fixed; inset: 50% auto auto 50%; transform: translate(-50%, -50%); width: min(32rem, calc(100vw - 2rem)); padding: 2rem; border: 3px solid white; border-radius: 1.5rem; background: #3155fff2; color: white; text-align: center; box-shadow: 0 1.5rem 5rem #12234377; }
+.splash .mascot { margin: auto; display: grid; place-items: center; width: 4rem; height: 4rem; border-radius: 50%; background: #ffe057; color: #3155ff; font-size: 2rem; }
+.splash small { display: block; margin-top: 1rem; opacity: .8; }
+.restart { position: fixed; right: 1rem; bottom: 1rem; background: white; box-shadow: none; }
+.failed #world { filter: grayscale(.55); }.failed .guide { background: #792f46ee; }.complete .guide { background: #13705bee; }
+@media (max-width: 620px) { .topbar { inset: .5rem .5rem auto; }.guide { inset: auto .5rem .5rem; width: auto; margin-right: 5.8rem; }.choices button { width: 100%; }.restart { right: .5rem; bottom: .5rem; } }

@@ -1,36 +1,14 @@
-export const healthyHomeCampaign = Object.freeze({
-  id: "healthy-home-foundation",
-  title: "Healthy Home Adventure",
-  missions: [
-    {
-      id: "clean-hands",
-      room: "kitchen",
-      prompt: "You just left the toilet. The chicken smells delicious. What comes first?",
-      lesson: "Wash with soap and clean running water before touching food.",
-      choices: [
-        { id: "eat", label: "Eat the chicken now", correct: false, feedback: "Germs from unwashed hands can reach food." },
-        { id: "wash", label: "Wash hands with soap", correct: true, feedback: "Clean hands help stop germs from reaching your food." },
-      ],
-    },
-    {
-      id: "medicine-safety",
-      room: "bedroom",
-      prompt: "A colorful tablet is on the table. Nobody told you to take it. What should you do?",
-      lesson: "Medicine is only used with a trusted adult and the correct instructions.",
-      choices: [
-        { id: "take", label: "Taste it", correct: false, feedback: "Never taste unknown medicine. It can be harmful." },
-        { id: "adult", label: "Tell a trusted adult", correct: true, feedback: "Excellent. A trusted adult can secure it safely." },
-      ],
-    },
-    {
-      id: "cough-care",
-      room: "living-room",
-      prompt: "The hero needs to cough while standing near a friend. What is the healthy move?",
-      lesson: "Cover a cough with a tissue or the inside of your elbow, then clean your hands.",
-      choices: [
-        { id: "open", label: "Cough into the air", correct: false, feedback: "An uncovered cough can spread droplets." },
-        { id: "elbow", label: "Use the inside of the elbow", correct: true, feedback: "Great choice. This helps protect people nearby." },
-      ],
-    },
-  ],
-});
+export const campaign=[
+ {id:'clean-hands',title:'The kitchen checkpoint',brief:'You have just visited the bathroom. Lunch is ready. What comes before that first bite?',room:'Kitchen',target:[1.4,1.4],lesson:'Wash after using the toilet and before eating. Wet, soap, scrub for at least 20 seconds, rinse and dry.',steps:[
+ ['sink','Before lunch…',[['food','Eat the chicken now'],['sink','Walk to the tap and wash my hands']],'Hands can carry germs even when they look clean.'],
+ ['wet','Start with running water',[['wet','Wet my hands with clean running water'],['skip','Wipe hands on my shirt']],'Clean running water starts the washing routine.'],
+ ['soap','Make a lather',[['soap','Add soap and lather both hands'],['skip','Water is enough for this routine']],'Use soap; include palms, backs, between fingers and under nails.'],
+ ['scrub','Scrub for 20 seconds',[['scrub','Start the 20-second hand scrub'],['skip','Rinse immediately']],'Take time to scrub every surface of your hands.'],
+ ['rinse','Rinse away the lather',[['rinse','Rinse with clean running water'],['skip','Leave the soap on']],'Rinse well under clean running water.'],
+ ['dry','Dry before eating',[['dry','Dry with a clean towel or air dryer'],['skip','Use a dirty shared cloth']],'Dry your hands using a clean towel or an air dryer.'],
+ ['food','Now enjoy lunch',[['food','Eat with clean hands']],'Your washing routine is complete. Enjoy lunch!']]},
+ {id:'medicine-safety',title:'The mystery medicine',brief:'A container of medicine is on a table. It looks colorful. What do you do?',room:'Living room',target:[-3.6,2],lesson:'Only take medicine with a trusted adult following the correct instructions. Never taste an unknown medicine.',steps:[['adult','Make a safe choice',[['taste','Taste it to find out what it is'],['adult','Leave it alone and tell a trusted adult']],'Leave medicines alone and ask a trusted adult for help.'],['store','Help keep the home safe',[['store','Ask an adult to store medicines safely'],['hide','Hide the bottle in my toy box']],'An adult should keep medicines safely stored away from children.']]},
+ {id:'cough-care',title:'The surprise sneeze',brief:'You feel a sneeze coming while playing in the living room.',room:'Living room',target:[-3,1],lesson:'Use a tissue or your elbow, put used tissues in a bin, and wash your hands.',steps:[['cover','Catch that sneeze',[['cover','Use a tissue or the inside of my elbow'],['open','Sneeze toward my friend']],'Cover coughs and sneezes to help protect people around you.'],['bin','What happens to the tissue?',[['bin','Put the tissue in the bin'],['keep','Leave it on the sofa']],'Used tissues belong in a bin.'],['wash','Finish the routine',[['wash','Go and wash my hands'],['play','Share snacks immediately']],'Wash your hands after blowing your nose, coughing or sneezing.']]},
+ {id:'water-safety',title:'The water choice',brief:'You are thirsty. One cup is from the safe drinking-water supply; another is an unknown outdoor puddle sample.',room:'Kitchen',target:[2,1.5],lesson:'Use a known safe drinking-water source. Clear appearance does not prove that water is safe.',steps:[['safe','Choose your drink',[['unknown','Drink the unknown sample because it looks clear'],['safe','Ask an adult for safe drinking water']],'Choose a known safe source and ask a trusted adult when unsure.']]},
+ {id:'hot-stove',title:'The busy kitchen',brief:'A pan is cooking and its handle reaches toward the edge. A grown-up is nearby.',room:'Kitchen',target:[3,-.3],lesson:'Stay away from hot pans and cooking surfaces. Tell a trusted adult about hazards instead of trying to fix them yourself.',steps:[['adult','What is the safest next step?',[['touch','Grab the hot handle myself'],['adult','Stay back and tell the grown-up']],'Hot cookware can burn. Stay back and ask an adult for help.']]}
+].map(m=>({...m,steps:m.steps.map(([id,title,choices,why])=>({id,title,choices,why}))}));

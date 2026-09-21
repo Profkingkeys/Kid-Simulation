@@ -1,134 +1,30 @@
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
-import { healthyHomeCampaign as campaign } from "../domain/campaign.js";
-import { HealthyHomeGame, STATES } from "../domain/game-engine.js";
-
-const canvas = document.querySelector("#world");
-const prompt = document.querySelector("#prompt");
-const lesson = document.querySelector("#lesson");
-const choices = document.querySelector("#choices");
-const stars = document.querySelector("#stars");
-const level = document.querySelector("#level");
-const splash = document.querySelector("#splash");
-const game = new HealthyHomeGame(campaign);
-
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled = true;
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xbfe8ff);
-const camera = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 0.1, 100);
-camera.position.set(0, 8.5, 13.5);
-camera.lookAt(0, 0, 0);
-
-scene.add(new THREE.HemisphereLight(0xffffff, 0x8cb77f, 2.7));
-const sun = new THREE.DirectionalLight(0xffffff, 3.2);
-sun.position.set(7, 12, 8);
-sun.castShadow = true;
-scene.add(sun);
-
-const floor = new THREE.Mesh(new THREE.BoxGeometry(18, 0.35, 11), new THREE.MeshStandardMaterial({ color: 0xf2d8a8 }));
-floor.position.y = -0.25;
-floor.receiveShadow = true;
-scene.add(floor);
-
-const rooms = {
-  bathroom: room(-6, 0x9edff3, "BATHROOM"),
-  kitchen: room(0, 0xffcf8a, "KITCHEN"),
-  bedroom: room(6, 0xcbb8ff, "BEDROOM"),
-  "living-room": room(0, 0xaee6a7, "LIVING ROOM", -4.3),
-};
-
-function room(x, color, name, z = 0) {
-  const group = new THREE.Group();
-  const rug = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.12, 4.4), new THREE.MeshStandardMaterial({ color, roughness: 0.8 }));
-  rug.position.set(x, 0, z);
-  rug.receiveShadow = true;
-  group.add(rug);
-  const marker = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.7, 16), new THREE.MeshStandardMaterial({ color: 0xffffff }));
-  marker.position.set(x, 0.42, z);
-  group.add(marker);
-  group.userData = { position: new THREE.Vector3(x, 0.65, z), name };
-  scene.add(group);
-  return group;
-}
-
-const tap = prop(1.3, 0.9, 0, 0x5b8ab9);
-const soap = prop(-1.25, 0.45, 0.45, 0xff63aa, 0.28);
-const chicken = prop(0, 0.5, -1.15, 0xc96c28, 0.48);
-const tablet = prop(6, 0.5, -0.8, 0xff4068, 0.32);
-const toilet = prop(-6, 0.5, 0, 0xf7fbff, 0.7);
-void tap; void soap; void chicken; void tablet; void toilet;
-
-function prop(x, y, z, color, size = 0.55) {
-  const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(size, 2), new THREE.MeshStandardMaterial({ color, roughness: 0.35 }));
-  mesh.position.set(x, y, z);
-  mesh.castShadow = true;
-  scene.add(mesh);
-  return mesh;
-}
-
-const hero = new THREE.Group();
-const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.4, 0.9, 6, 12), new THREE.MeshStandardMaterial({ color: 0x3155ff }));
-body.castShadow = true;
-const head = new THREE.Mesh(new THREE.SphereGeometry(0.37, 20, 20), new THREE.MeshStandardMaterial({ color: 0x8b4d27 }));
-head.position.y = 0.95;
-head.castShadow = true;
-hero.add(body, head);
-hero.position.copy(rooms.bathroom.userData.position);
-scene.add(hero);
-
-let target = hero.position.clone();
-document.querySelector("#start").addEventListener("click", () => {
-  splash.hidden = true;
-  present(game.start());
-});
-document.querySelector("#restart").addEventListener("click", () => {
-  document.body.classList.remove("failed", "complete");
-  splash.hidden = false;
-  hero.position.copy(rooms.bathroom.userData.position);
-  target.copy(hero.position);
-  present(game.reset());
-});
-
-function present(state) {
-  stars.textContent = `★ ${state.stars}`;
-  level.textContent = state.state === STATES.COMPLETE ? "Adventure complete" : `Mission ${Math.min(state.missionIndex + 1, state.missionCount)} of ${state.missionCount}`;
-  choices.replaceChildren();
-
-  if (state.feedback) lesson.textContent = state.feedback;
-  if (state.state === STATES.CHOOSING) {
-    prompt.textContent = state.mission.prompt;
-    if (!state.feedback) lesson.textContent = state.mission.lesson;
-    target = rooms[state.mission.room].userData.position.clone();
-    state.mission.choices.forEach((choice) => {
-      const button = document.createElement("button");
-      button.textContent = choice.label;
-      button.type = "button";
-      button.addEventListener("click", () => present(game.choose(choice.id)));
-      choices.append(button);
-    });
-  } else if (state.state === STATES.FAILED) {
-    prompt.textContent = "Mission paused. Let's learn and try again.";
-    document.body.classList.add("failed");
-  } else if (state.state === STATES.COMPLETE) {
-    prompt.textContent = "Healthy Home Champion!";
-    lesson.textContent = "You protected the meal, handled medicine safely, and covered a cough. Three smart choices, three stars.";
-    document.body.classList.add("complete");
-  }
-}
-
-renderer.setAnimationLoop((time) => {
-  hero.position.lerp(target, 0.025);
-  hero.rotation.y = Math.sin(time * 0.002) * 0.08;
-  hero.position.y = 0.65 + Math.abs(Math.sin(time * 0.004)) * 0.08;
-  renderer.render(scene, camera);
-});
-
-addEventListener("resize", () => {
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
-
-present(game.snapshot());
+import {campaign} from '../domain/campaign.js';import {createGame,act,tick,retryChoice,nextMission} from '../domain/game-engine.js';import {THREE,createWorld,box,ball,tube,label,person,safeStorage,saveReport} from './scene-kit.js';
+const $=id=>document.getElementById(id);let state=createGame(),paused=false,reduced=matchMedia('(prefers-reduced-motion: reduce)').matches,world,avatar,water;
+const stored=safeStorage('kidsim-v2-completed');let completed=new Set((Array.isArray(stored)?stored:[]).filter(x=>campaign.some(m=>m.id===x)));
+$('boundary').textContent='A family learning game about everyday healthy habits. Adults can play alongside children. No sign-in, chat, advertising or personal information is collected.';$('scene-tag').textContent='WELCOME TO YOUR HEALTHY HOME';$('scene-note').textContent='Your explorer walks automatically. Make choices using the buttons below.';$('card-title').textContent='The habit to remember';
+function render(){const m=campaign[state.mission],step=m.steps[state.step];$('edition').textContent=`Healthy home / ${String(state.mission+1).padStart(2,'0')}`;$('title').textContent=m.title;$('brief').textContent=m.brief;$('chapter').textContent=`${m.room} · habit ${state.mission+1} of ${campaign.length}`;$('progress').max=m.steps.length;$('progress').value=state.step;$('score').textContent=state.score;$('saved').textContent=`${completed.size} / ${campaign.length}`;$('card').textContent=m.lesson;$('objective').textContent=state.status==='walking'?'Follow your explorer':state.status==='complete'?'A healthy habit learned!':state.status==='retry'?'A chance to learn':step.title;$('feedback').textContent=paused?'Take a break. Your game will wait.':state.feedback;$('status').textContent=paused?'Paused':state.status==='scrubbing'?`${Math.ceil(20-state.scrub)} seconds`:state.status;$('actions').replaceChildren();if(state.status==='playing')for(const [id,title] of step.choices){const b=document.createElement('button');b.textContent=title;b.disabled=paused;b.onclick=()=>choose(id);$('actions').append(b)}if(state.status==='retry'){const b=document.createElement('button');b.textContent='Try that choice again';b.className='primary';b.disabled=paused;b.onclick=()=>{state=retryChoice(state);render()};$('actions').append(b)}$('next').hidden=state.status!=='complete';$('next').disabled=paused;$('next').textContent=state.mission===campaign.length-1?'Play the home adventure again →':'Continue the home adventure →';$('motion').setAttribute('aria-pressed',String(reduced));$('motion').textContent=reduced?'Motion reduced':'Reduce motion';$('journal').replaceChildren();for(const e of state.journal){const li=document.createElement('li');li.textContent=`${e.correct?'✓':'↺'} ${e.lesson}`;$('journal').append(li)}}
+function choose(id){if(paused)return;state=act(state,id);if(state.status==='complete'){completed.add(campaign[state.mission].id);safeStorage('kidsim-v2-completed',[...completed]);}render()}
+$('retry').onclick=()=>{state=createGame(state.mission);render()};$('next').onclick=()=>{state=nextMission(state);render()};$('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'Resume':'Pause';render()};$('motion').onclick=()=>{reduced=!reduced;render()};$('export').onclick=()=>saveReport('kidsim-learning-report.json',{game:'KidSim',version:'0.2.0',...state});render();
+try{world=createWorld($('world'),true);const {scene,camera}=world;camera.position.set(12,13,16);camera.lookAt(0,.4,0);
+ box(scene,0,-.22,0,13,.4,10,0xd0b98d);box(scene,0,1.7,-4.8,13,3.4,.18,0xf6eacb);box(scene,-6.4,1.5,0,.18,3,9.6,0xe4d8bc);
+ box(scene,-3.9,.015,-2.5,4.8,.04,4.3,0x9bcbd2);box(scene,2.8,.016,-1.5,6.6,.04,6.5,0xdde6c7);box(scene,-3.2,.017,2.5,5.5,.045,3,0xddb9a4);
+ // Bathroom: toilet, tank, basin and shower screen.
+ tube(scene,-4.8,.5,-3.2,.45,.3,.7,0xf7f6e9);tube(scene,-4.8,.88,-3.2,.49,.49,.14,0xffffff);box(scene,-4.8,.95,-3.7,.8,1,.35,0xf4f3e9);
+ box(scene,-2.5,.95,-3.8,1.6,1.9,.9,0x568c8f);box(scene,-2.5,1.95,-3.8,1.75,.12,1.1,0xf7fbef);tube(scene,-2.5,2.05,-3.8,.4,.25,.16,0x94b5b5);box(scene,-2.5,2.32,-4.1,.1,.5,.1,0x728b92);box(scene,-2.5,2.52,-3.95,.1,.1,.4,0x728b92);
+ label(scene,'Bathroom',-3.9,3.2,-4,3);
+ // Kitchen counter and handwashing station.
+ box(scene,2.8,.95,-3.9,5.8,1.9,1.15,0x688f76);box(scene,2.8,1.95,-3.9,6,.13,1.35,0xf7f2d8);
+ tube(scene,1.1,2.08,-3.9,.5,.35,.16,0xbac9c6);box(scene,1.1,2.35,-4.25,.12,.65,.12,0x708e91);box(scene,1.1,2.62,-4.02,.12,.12,.48,0x708e91);box(scene,2,2.25,-4,.28,.5,.28,0xf4bd5b);box(scene,2,2.55,-4,.18,.13,.18,0x566b64);label(scene,'Tap + soap',1.4,3.25,-3.8,2.6);
+ water=tube(scene,1.1,2.3,-3.8,.025,.035,.55,0x74c9e0);water.visible=false;
+ box(scene,4.4,2.04,-3.9,1.7,.08,.9,0x384951);for(let i=0;i<2;i++)tube(scene,4+i*.8,2.1,-3.9,.25,.25,.08,0x242d31);tube(scene,4.1,2.25,-3.9,.3,.26,.28,0x6a7880);box(scene,4.1,2.35,-3.35,.12,.1,.75,0x364850);
+ // Dining table, plate and chicken drumsticks.
+ box(scene,2,1.3,1.5,3.1,.18,2,0xad8256);for(const x of [.75,3.25])for(const z of [.8,2.2])box(scene,x,.63,z,.15,1.3,.15,0x8c6643);tube(scene,2,1.44,1.5,.61,.61,.08,0xfaf8e9);for(let i=0;i<2;i++){const b=ball(scene,1.8+i*.4,1.62,1.5,.23,0xb77a39);b.scale.set(1.2,.7,.75);box(scene,1.8+i*.4,1.63,1.82,.1,.1,.35,0xeee2c0);}label(scene,'Lunch table',2,2.6,1.5,2.8);
+ box(scene,2,.6,3.15,1,.16,.85,0x48746c);box(scene,2,1.1,3.5,1,1.1,.14,0x48746c);
+ // Living room with sofa, table, plant and safely closed medicine container.
+ box(scene,-4,.45,2.5,3.2,.75,1.2,0xd29578);box(scene,-4,1.05,3,3.2,.9,.25,0xe0a78a);for(const x of [-5.55,-2.45])box(scene,x,.85,2.5,.3,.85,1.4,0xca886e);for(const x of [-4.8,-3.3])box(scene,x,.9,2.45,1.2,.2,.9,0xf0bb95);
+ box(scene,-3.8,.68,.6,2,.16,1,0xe9d8af);for(const x of [-4.5,-3.1])box(scene,x,.32,.6,.14,.64,.7,0x9c8257);tube(scene,-3.8,.95,.6,.15,.15,.43,0xc5a075);tube(scene,-3.8,1.22,.6,.17,.17,.12,0xe4e8dd);label(scene,'Ask an adult',-3.8,1.95,.6,2.5);
+ tube(scene,-5.7,.4,-.4,.35,.25,.7,0xba8a66);for(let i=0;i<4;i++)ball(scene,-5.7+Math.sin(i)*.2,1+i*.18,-.4,.3,0x4e8a62);
+ label(scene,'Living room',-4,2.5,3,3);avatar=person(scene,-4,-2,0xefbc58);
+}catch(e){$('fallback').hidden=false;console.warn('WebGL unavailable; accessible gameplay remains active.',e.message)}
+let last=performance.now();function frame(now){const dt=Math.min((now-last)/1000,.05);last=now;if(!paused&&!document.hidden){const prev=state;state=tick(state,dt);if(prev.status!==state.status||Math.ceil(prev.scrub)!==Math.ceil(state.scrub))render();}
+ if(world){if(!paused&&avatar){const m=campaign[state.mission];let target=m.target;if(state.mission===0&&state.step>=1&&state.step<=5)target=[1.1,-2.4];if(state.status==='walking'){const t=reduced?1:Math.min(1,state.travel/3);avatar.group.position.set(-4+(target[0]+4)*t,0,-2+(target[1]+2)*t);if(!reduced)avatar.limbs.forEach((limb,i)=>limb.rotation.x=Math.sin(now*.009+i%2*Math.PI)*.25);}else {avatar.group.position.x+=(target[0]-avatar.group.position.x)*(reduced?1:Math.min(1,dt*3));avatar.group.position.z+=(target[1]-avatar.group.position.z)*(reduced?1:Math.min(1,dt*3));avatar.limbs.forEach(l=>l.rotation.x=0);}avatar.group.rotation.y=state.mission===0&&state.step>=1&&state.step<=5?Math.PI:0;water.visible=state.mission===0&&state.step>=1&&state.step<=5;}world.renderer.render(world.scene,world.camera)}requestAnimationFrame(frame)}requestAnimationFrame(frame);

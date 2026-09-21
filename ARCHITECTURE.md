@@ -1,19 +1,11 @@
 # Architecture
 
-```mermaid
-flowchart LR
-    Campaign[Health campaign data] --> Engine[Decision state machine]
-    Input[Player choice] --> Engine
-    Engine --> Outcome[Stars + feedback]
-    Outcome --> View[Three.js home + accessible HUD]
-    Rooms[Room coordinates] --> View
-```
+The domain engine holds plain, serializable campaign state. It accepts only actions offered by the current step and rejects terminal or out-of-order actions. UI buttons use the same transition function, so canvas rendering cannot bypass a rule. A mission can be retried without reloading the page.
 
-The domain layer has no dependency on Three.js or browser APIs. A later Filament renderer can consume the same campaign and decision contract.
+The Three.js scene uses procedural meshes and canvas-text labels. It has no remote models, textures or font dependencies. If WebGL fails, the decision interface remains usable. Progress writes are best-effort localStorage; the journal is local and exports only on request. The application makes no fetch requests.
 
-## Safety properties
+`src/domain/` contains scenario content and transitions. `src/web/` contains the interface and scene. `scripts/build.js` bundles Three.js and app code into a single HTML file. `scripts/serve.js` is an optional development file server. `test/` checks the state machine rather than asserting incidental CSS or mesh details.
 
-- Wrong choices never present illness as punishment or moral failure.
-- Medicine scenarios always route the child to a trusted adult.
-- The foundation build stores no names, ages, health history, or behavior profiles.
-- New missions require a learning objective, correct action, clear explanation, and tests.
+All scenarios are deterministic. There is no live AI model in this release. Adding an AI coach later requires a separate reviewed content corpus, explicit uncertainty, evaluation against teacher rubrics, and server-side credentials. A model must not authorize clinical preparation or invent lesson rules.
+
+Future graphics work can explore a separate native Filament renderer against the same scenario format. Filament is not implemented here and is not required to play the browser game.

@@ -1,55 +1,6 @@
-export const STATES = Object.freeze({ READY: "ready", CHOOSING: "choosing", FAILED: "failed", COMPLETE: "complete" });
-
-export class HealthyHomeGame {
-  constructor(campaign) {
-    this.campaign = campaign;
-    this.reset();
-  }
-
-  reset() {
-    this.state = STATES.READY;
-    this.missionIndex = 0;
-    this.stars = 0;
-    this.history = [];
-    return this.snapshot();
-  }
-
-  start() {
-    if (this.state !== STATES.READY) throw new Error("Campaign already started.");
-    this.state = STATES.CHOOSING;
-    return this.snapshot();
-  }
-
-  choose(choiceId) {
-    if (this.state !== STATES.CHOOSING) throw new Error(`Choice unavailable during ${this.state}.`);
-    const mission = this.currentMission;
-    const choice = mission.choices.find((item) => item.id === choiceId);
-    if (!choice) throw new Error(`Unknown choice: ${choiceId}`);
-
-    this.history.push({ missionId: mission.id, choiceId, correct: choice.correct });
-    if (!choice.correct) {
-      this.state = STATES.FAILED;
-      return this.snapshot({ feedback: choice.feedback });
-    }
-
-    this.stars += 1;
-    this.missionIndex += 1;
-    if (this.missionIndex === this.campaign.missions.length) this.state = STATES.COMPLETE;
-    return this.snapshot({ feedback: choice.feedback });
-  }
-
-  get currentMission() {
-    return this.campaign.missions[this.missionIndex] ?? null;
-  }
-
-  snapshot(extra = {}) {
-    return Object.freeze({
-      state: this.state,
-      missionIndex: this.missionIndex,
-      missionCount: this.campaign.missions.length,
-      stars: this.stars,
-      mission: this.currentMission,
-      ...extra,
-    });
-  }
-}
+import {campaign} from './campaign.js';
+export function createGame(index=0){if(!Number.isInteger(index)||!campaign[index])throw new RangeError('Unknown mission');return {mission:index,step:0,status:'walking',travel:0,scrub:0,score:0,feedback:'Follow your explorer through the home.',journal:[]};}
+export function tick(state,seconds){if(!Number.isFinite(seconds)||seconds<=0)return state;const dt=Math.min(seconds,.25);if(state.status==='walking'){const travel=Math.min(3,state.travel+dt);return {...state,travel,status:travel>=3?'playing':'walking',feedback:travel>=3?'You have arrived. Choose what to do next.':state.feedback};}if(state.status==='scrubbing'){const scrub=Math.min(20,state.scrub+dt);if(scrub<20)return {...state,scrub,feedback:`Keep scrubbing: ${Math.ceil(20-scrub)} seconds to go.`};return {...state,scrub,step:state.step+1,score:state.score+10,status:'playing',feedback:'Twenty seconds complete. Time to rinse.',journal:[...state.journal,{step:'scrub',correct:true,lesson:'Completed a 20-second scrub.'}]};}return state;}
+export function act(state,action){if(state.status!=='playing')return state;const step=campaign[state.mission].steps[state.step];if(!step.choices.some(([id])=>id===action))return state;if(action!==step.id)return {...state,status:'retry',feedback:`Let’s try that again. ${step.why}`,journal:[...state.journal,{step:step.id,correct:false,lesson:step.why}]};if(action==='scrub')return {...state,status:'scrubbing',scrub:0,feedback:'Scrub palms, backs, between fingers and under nails for 20 seconds.'};const next=state.step+1,complete=next===campaign[state.mission].steps.length;return {...state,step:next,score:state.score+10,status:complete?'complete':'playing',feedback:step.why,journal:[...state.journal,{step:step.id,correct:true,lesson:step.why}]};}
+export function retryChoice(state){return state.status==='retry'?{...state,status:'playing',feedback:'You can learn from the last choice. Try the safe habit.'}:state;}
+export function nextMission(state){return state.status==='complete'?createGame((state.mission+1)%campaign.length):state;}

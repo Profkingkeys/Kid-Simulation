@@ -1,29 +1,6 @@
-import test from "node:test";
-import assert from "node:assert/strict";
-import { healthyHomeCampaign as campaign } from "../src/domain/campaign.js";
-import { HealthyHomeGame, STATES } from "../src/domain/game-engine.js";
-
-test("the healthy route completes the campaign with three stars", () => {
-  const game = new HealthyHomeGame(campaign);
-  game.start();
-  game.choose("wash");
-  game.choose("adult");
-  const result = game.choose("elbow");
-  assert.equal(result.state, STATES.COMPLETE);
-  assert.equal(result.stars, 3);
-});
-
-test("eating before handwashing fails the mission", () => {
-  const game = new HealthyHomeGame(campaign);
-  game.start();
-  const result = game.choose("eat");
-  assert.equal(result.state, STATES.FAILED);
-  assert.match(result.feedback, /unwashed hands/i);
-});
-
-test("unknown choices cannot mutate progression", () => {
-  const game = new HealthyHomeGame(campaign);
-  game.start();
-  assert.throws(() => game.choose("invented"), /Unknown choice/);
-  assert.equal(game.missionIndex, 0);
-});
+import test from 'node:test';import assert from 'node:assert/strict';import {createGame,tick,act,retryChoice,nextMission} from '../src/domain/game-engine.js';import {campaign} from '../src/domain/campaign.js';const arrive=s=>{for(let i=0;i<12;i++)s=tick(s,.25);return s};
+test('choices are disabled until the automatic journey arrives',()=>{const s=createGame();assert.equal(act(s,'sink'),s);assert.equal(arrive(s).status,'playing')});
+test('eating before washing fails and retry preserves the learning step',()=>{let s=act(arrive(createGame()),'food');assert.equal(s.status,'retry');assert.equal(s.score,0);s=retryChoice(s);assert.equal(s.step,0);assert.equal(act(s,'sink').step,1)});
+test('scrubbing requires twenty active seconds and cannot be skipped',()=>{let s=arrive(createGame());for(const id of ['sink','wet','soap','scrub'])s=act(s,id);assert.equal(s.status,'scrubbing');assert.equal(act(s,'rinse'),s);for(let i=0;i<79;i++)s=tick(s,.25);assert.equal(s.status,'scrubbing');assert.equal(s.score,30);s=tick(s,.25);assert.equal(s.status,'playing');assert.equal(s.step,4);assert.equal(s.score,40)});
+test('all home missions finish and terminal actions cannot inflate points',()=>{for(let i=0;i<campaign.length;i++){let s=arrive(createGame(i));for(const step of campaign[i].steps){s=act(s,step.id);if(s.status==='scrubbing')for(let j=0;j<80;j++)s=tick(s,.25);}assert.equal(s.status,'complete');assert.equal(s.score,campaign[i].steps.length*10);assert.equal(act(s,'food'),s);assert.equal(nextMission(s).mission,(i+1)%campaign.length)}});
+test('invalid time inputs and jumps do not bypass the timer',()=>{let s=createGame();assert.equal(tick(s,NaN),s);assert.equal(tick(s,-1),s);assert.equal(tick(s,999).travel,.25)});

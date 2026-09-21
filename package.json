@@ -1,15 +1,22 @@
 {
   "name": "kid-simulation",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "A Three.js health-education adventure for children.",
   "scripts": {
     "start": "node scripts/serve.js",
+    "build": "node scripts/build.js",
     "test": "node --test",
-    "check": "node --check src/domain/campaign.js && node --check src/domain/game-engine.js && node --check src/web/main.js && node --check scripts/serve.js"
+    "check": "node --check src/web/main.js && node --check scripts/build.js"
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
   }
 }
